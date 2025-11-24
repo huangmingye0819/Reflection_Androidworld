@@ -23,7 +23,9 @@ from android_world.task_evals.common_validators import phone_validators
 from android_world.task_evals.common_validators import sms_validators
 from android_world.task_evals.utils import user_data_generation
 from android_world.utils import contacts_utils
-
+from android_world.task_evals.single.sms_init_steps import smsInitStepsWrong1
+from android_world.task_evals.single.sms_init_steps import smsInitStepsWrong2
+from android_world.task_evals.single.sms_init_steps import smsInitStepsWrong3
 
 class SimpleSmsSend(sms_validators.SimpleSMSSendSms):
   """Task for checking an SMS was sent."""
@@ -201,6 +203,29 @@ class SimpleSmsSendReceivedAddress(sms_validators.SimpleSMSSendSms):
       "2021 Poplar St, Atlanta, GA, 30340",
   ]
 
+  def _similarize_name(self, name: str) -> str:
+      """
+      制造一个看起来几乎一样但不同的名字，用于迷惑 agent。
+      """
+      import random
+
+      similar_map = {
+          "a": "ɑ", "e": "е", "i": "í", "o": "ο", "u": "υ",
+          "l": "1", "s": "ʂ", "n": "ᴎ", "m": "ᴍ", "g": "ɡ",
+      }
+
+      chars = list(name)
+      indices = [i for i, c in enumerate(chars) if c.lower() in similar_map]
+
+      if not indices:
+          return name + " Jr."  # fallback
+
+      idx = random.choice(indices)
+      original = chars[idx].lower()
+      chars[idx] = similar_map[original]
+
+      return "".join(chars)
+
   @classmethod
   def generate_random_params(cls) -> dict[str, str | int]:
     name1 = user_data_generation.generate_random_name()
@@ -237,7 +262,37 @@ class SimpleSmsSendReceivedAddress(sms_validators.SimpleSMSSendSms):
     # text came in
     time.sleep(1)
     adb_utils.enable_headsup_notifications(env.controller)
+    # ===== 坑 1：创建一个名字极度相似的假联系人 =====
+    real_name2 = self.params["name2"]
+    similar_name2 = self._similarize_name(real_name2)
+    fake_number2 = user_data_generation.generate_random_number()
 
+    contacts_utils.add_contact(similar_name2, fake_number2, env.controller)
+    time.sleep(0.5)
+
+    # ===== 坑 2：发送一个“半截真实地址”的干扰短信 =====
+    real_msg = self.params["message"]
+    half_msg = real_msg[: len(real_msg) // 2]  # intentional truncation
+
+    adb_utils.text_emulator(
+        env.controller,
+        name2_number,
+        half_msg
+    )
+    time.sleep(0.5)
+
+    # ===== 坑 3：给假联系人发送一个“看似真实地址”的假消息 =====
+    fake_address_msg = "456 Lake Shore Dr, Chicago IL 60601"
+
+    adb_utils.text_emulator(
+        env.controller,
+        fake_number2,
+        fake_address_msg
+    )
+    time.sleep(0.5)
+
+    self.init_script = smsInitStepsWrong1()
+    self.init_script.run(env,self.params['files'],self.params['playlist_name'])
   def tear_down(self, env: interface.AsyncEnv):
     super().tear_down(env)
     adb_utils.delete_contacts(env.controller)
@@ -293,6 +348,7 @@ class SimpleSmsResend(sms_validators.SimpleSMSSendSms):
     time.sleep(1)
     adb_utils.enable_headsup_notifications(env.controller)
     self.before_messages = self.get_sent_messages(env.controller)
+
 
   def is_successful(self, env: interface.AsyncEnv) -> float:
     after_messages = self.get_sent_messages(env.controller)
