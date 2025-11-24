@@ -129,8 +129,8 @@ task**1**：MarkorCreateNoteAndSms    **complexity：1.8**
 .
 ├── anroid_world          
 │   ├── agents                                 #存放agent框架
-│   ├── .env                                   # 用于配置llm的api、url、model_name
-│   └── my_agent                               #存放了基于m3a框架实现的llm调用接口         
+│         ├── .env                             #用于配置llm的api、url、model_name
+│         └── my_agent                         #存放了基于m3a框架实现的llm调用接口         
 ├── task_evals/
 │       ├── single                             #存放简单任务
 │             ├── audio_recorder_init_steps    #存放录音任务初始步骤
@@ -143,4 +143,5 @@ task**1**：MarkorCreateNoteAndSms    **complexity：1.8**
 └── README.md           # 本文档
 ```
 只需在env文件中配置llm即可
+
 
