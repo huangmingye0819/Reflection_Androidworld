@@ -1,213 +1,121 @@
-# AndroidWorld
+# AndroidWorld任务清单
 
-<!-- mdlint off(WHITESPACE_LINE_LENGTH) -->
+**“内省式”基准设计的一般原则**
+         注入不确定性：弹窗、广告、权限、打乱的UI元素。
+         制造虚假成功：让环境显示“完成”，而实际状态并未改变。
+         强制回溯：某些步骤需要修正之前的假设（例如，文件夹丢失、文件错误）。
 
-[![Unittests](https://github.com/google-research/android_world/actions/workflows/pytest.yml/badge.svg)](https://github.com/google-research/android_world/actions/workflows/pytest.yml)
+  评估验证：智能体在继续执行任务之前是否会明确验证自己的行为？
 
-<p align="center">
-<a href="https://google-research.github.io/android_world/">Website</a> •
-<a href="https://arxiv.org/pdf/2405.14573">Paper</a> •
-<a href="https://google-research.github.io/android_world/task_list.html">Tasks</a> •
-<a href="https://docs.google.com/spreadsheets/d/1cchzP9dlTZ3WXQTfYNhh3avxoLipqHN75v1Tb86uhHo/edit?gid=0#gid=0">Leaderboard</a>
-</p>
+#### audio_recorder 关于录音的相关任务
 
-![Overview](assets/overview.png)
+task**1**：AudioRecorderRecordAudioWithFileName   **complexity：2**✅
 
-**AndroidWorld** is an environment for building and benchmarking autonomous
-computer control agents.
+检查是否已完成一个使用file_name的录音的任务
 
-It runs on a live Android emulator and contains a highly reproducible benchmark
-of 116 hand-crafted tasks across 20 apps, which are dynamically instantiated
-with randomly-generated parameters to create millions of unique task variations.
+修改：录制开始后，显示错误，如“麦克风繁忙”。
 
-In addition to the built-in tasks, AndroidWorld also supports the popular web benchmark, MiniWoB++ from [Liu et al.](http://arxiv.org/abs/1802.08802).
+评估：代理能否暂停，识别出它实际上没有记录，然后重试？
 
-Key features of AndroidWorld include:
+重新思考触发器：意识到除非出现文件，否则完成“记录”操作≠成功。
 
-* 📝 **116 diverse tasks** across 20 real-world apps
-* 🎲 **Dynamic task instantiation** for millions of unique variations
-* 🏆 **Durable reward signals** for reliable evaluation
-* 🐳 **Experimental Docker Support** for simplified setup and consistent environments (as of 06/02/2025)
-* 🌐 **Open environment** with access to millions of Android apps and websites
-* 💾 **Lightweight footprint** (2 GB memory, 8 GB disk)
-* 🔧 **Extensible design** to easily add new tasks and benchmarks
-* 🖥️ **Integration with MiniWoB++** web-based tasks
+#### file 关于文件的相关任务
 
-See demo videos on our [website](https://google-research.github.io/android_world/).
-o
+task**2**：FilesDeleteFile  **complexity = 2.2**✅
+        从位于sdk_gphone_x86_64存储区域内的{子文件夹}文件夹中的Android文件系统中删除文件{file_name}
 
-## Installation
+修改：添加一个名称几乎相同的诱饵文件（额外空格）。
 
-1. Set up the Android Emulator
-   1. Download Android Studio [here](https://developer.android.com/studio?gad_source=1&gclid=Cj0KCQjw3ZayBhDRARIsAPWzx8oLcadBD0vAq8xmUutaunLGSzhgEtLz4xVZ_SpV4G0xJazS7LxQkDsaAuveEALw_wcB&gclsrc=aw.ds)
-   2. Create an Android Virtual Device (AVD) by following these instructions. For hardware select **Pixel 6**, for System Image select **Tiramisu, API Level 33**, and choose AVD name as **AndroidWorldAvd**. [Watch the setup video.](https://github.com/google-research/android_world/assets/162379927/efc33980-8b36-44be-bb2b-a92d4c334a50)
+评估：如果删除失败，代理是否会重新检查文件名并重试？
 
-1. Launch the Android Emulator from the command line
+反思触发器：反思第一次尝试因不匹配而失败。
 
-    Launch the emulator from the command line, not using the Android Studio UI,
-    with the `-grpc 8554` flag which is needed communication with accessibility
-    forwarding app.
+#### Markor  关于Markor app的相关任务
 
-    ```bash
-    # Typically it's located in ~/Android/Sdk/emulator/emulator or
-    # ~/Library/Android/sdk/emulator/emulator
-    EMULATOR_NAME=AndroidWorldAvd # From previous step
-    ~/Library/Android/sdk/emulator/emulator -avd $EMULATOR_NAME -no-snapshot -grpc 8554
-    ```
+task**1**：MarkorMoveNote  **complexity：1.4**   ✅
 
-1. [Optional] It's recommended to use `conda`, which you can download [here](https://docs.anaconda.com/free/miniconda/miniconda-install/).
+在Markor中，将名为{file_name}的笔记从{source_folder}移动到{destination_folder}的任务 
 
-    ```
-    conda create -n android_world python=3.11.8
-    conda activate android_world
-    ```
+当前：移动笔记。
 
-1. Install AndroidWorld. *Note: Python 3.11 or above is required.*
+修改：移动笔记时，如果文件夹尚未创建（实际操作中是把目的文件夹删掉）。
 
-    ```python
-    git clone https://github.com/google-research/android_world.git
-    cd ./android_world
-    pip install -r requirements.txt
-    python setup.py install
-    ```
+评估：代理可以创建丢失的文件夹，然后重试移动吗？
 
-1. Add model provider APIs as environment variables.
+task**2**：MarkorCreateFolder  **complexity：1**   ❌
 
-    ```bash
-    # Add to .bashrc.
-    export OPENAI_API_KEY=your-key
-    export GCP_API_KEY=your-key
-    ```
+在Markor中创建一个名为{folder_name}的新文件夹的任务 
 
-1. Install `ffmpeg`, if not already installed.
+task**3**：MarkorCreateNote  **complexity：1.6**   ❌
 
-    ```bash
-    # Linux (Ubuntu/Debian)
-    # sudo apt update && sudo apt install ffmpeg
+在Markor中创建一个名为{file_name}且包含文本{text}的新笔记的任务 
 
-    # macOS
-    brew install ffmpeg
-    ```
+task**4**：MarkorTranscribeVideo  **complexity：2**   
 
-## Quickstart
+在VLC播放器中观看Download文件夹中的{video_name}视频，将每帧显示的字符串序列以逗号分隔的形式写入Markor中的{file_name}文本文件的任务
 
-Run the `minimal_task_runner.py` script to see the basic mechanics of
-AndroidWorld components. It initializes the environment, sets up a task, and
-runs the default agent, M3A, on it.
-```bash
-python minimal_task_runner.py --task=ContactsAddContact
-```
+#### expense在费用应用程序中管理费用的任务
 
-If you don't specify a task, a random task will be selected. *NOTE: If you want
-to try open-source apps, i.e. not included with Android OS, please run
-`--perform_emulator_setup` in the script below.*
+task**1**：ExpenseAddSingle  **complexity：1.2**   ❌
 
-## Docker Support (Experimental)
+添加单个费用记录的任务（包含10条干扰记录） 
 
-AndroidWorld now offers Docker support. This allows you to run the Android
-environment and server within a Docker container, which can simplify setup and
-ensure a consistent environment.
+#### SMS短信任务
 
-**Note:** This feature is experimental and has not been extensively tested.
+task**1**：SimpleSmsSendReceivedAddress **complexity：1.8**
+在 Simple SMS Messenger 中，将 {name2} 刚发来的活动地址转发给 {name1} 的任务
 
-1.  **Build the Docker image:**
+1.错误1：信息不全✅
 
-    Navigate to the root directory of the `android_world` repository and run:
-    ```bash
-    docker build -t android_world:latest .
-    ```
+2.错误2：错误联系人的正确信息✅
 
-2.  **Run the Docker container:**
-    ```bash
-    docker run --privileged -p 5000:5000 -it android_world:latest
-    ```
-    This will start the Android emulator and the FastAPI server inside the
-    container. The server will be accessible on `http://localhost:5000`.
+3.错误3：错误联系人的错误信息✅
 
-3.  **Interact with the environment:**
-    You can see the `scripts/run_suite_on_docker.py` script as an example client
-    to interact with the Android environment server running in Docker.
+#### OsmAnd app 离线地图应用程序
 
-### Note for Apple Silicon users
+task**2**：OsmAndMarker  **complexity：2.0**   
 
-There are known [issues](https://github.com/amrsa1/Android-Emulator-image/issues/10) with installing the required package `emulator` on ARM chips (Apple Silicon). To get around this, if building images locally, you should build images for the AMD64/x86_64 instruction set, by running:
-```bash
-docker buildx build --platform linux/amd64 -t android-emulator:latest .
-```
+在OsmAnd地图应用中为{location}添加一个位置标记的任务 
 
-Note, running in a Docker container like this, on an Apple Silicon device will run quite slowly compared to running the Android
-Device and Emulator natively (because you end up running an Android Emulator inside a Linux Emulator...).
+#### Phone 关于电话的相关任务
 
-## Run the benchmark
+task**1**：MarkorCallApartment  **complexity：1**   
 
-Note: **Task Step Limits Update**
-As of 11/18/2024, the max_steps/step_budget for each task in AndroidWorld have been updated to approximately **2x the human average completion time**. This adjustment ensures agents have sufficient time to complete tasks, while also reducing overhead of running thebenchmark. [Here](https://docs.google.com/spreadsheets/d/1KF-vY0Uy47o0mnursvs-HmS6hreU6U3rPrAjgEfjMK4/edit?usp=sharing) are the per-task updates.
+拨打公寓名称{name}的电话，该号码在Markor的apartments.md文件中，确保通话界面显示“保持”等选项的任务
 
-```bash
-python run.py \
-  --suite_family=android_world \
-  --agent_name=t3a_gpt4 \
-  --perform_emulator_setup \
-  --tasks=ContactsAddContact,ClockStopWatchRunning \  # Optional: Just run on a subset.
-```
+#### recipe 食谱应用程序
 
-The first time you run this script, you must install the necessary apps and set
-permissions by specifying `--perform_emulator_setup`. This is a one-time setup.
-It may take several minutes depending on the connection speed.
+task**1**：RecipeAddMultipleRecipesFromMarkor **complexity：6**❌
+        将 Markor 中 recipes.txt 里的食谱添加到 Broccoli 食谱应用中的任务
 
-Above we specify the optional `--tasks` flag to run on a subset of tasks. Leave
-it empty to run on the entire AndroidWorld suite.
+当前：按顺序添加食谱或歌曲。
 
-The `n_task_combinations` argument specifies how many parameter permutations to
-use for each task. For example, for an SMS task, it would correspond to
-different phone number/message combinations for each run.
+修改：部分完成后，在UI中随机洗牌项目。
 
-If a run fails part-way through, you can resume it by re-running the script with
-the `--checkpoint_dir` flag pointing to the output directory from the original
-run.
+评估：代理人能否识别不匹配并重新计划以保持正确的顺序？
 
-## Running MiniWoB++ tasks
+**与retro_music任务挖坑点一致**
 
-To run the MiniWoB++ web-based tasks in AndroidWorld, simply set
-`--suite_family=miniwob` and `--perform_emulator_setup` in the command above.
+#### retro_music 音乐应用程序
 
-A key advantage of running MiniWoB++ tasks is that common input elements are
-rendered as native, commonly used Android UI widgets, rather than as HTML. Thus
-agents must learn to use universal widgets such as time- and date-pickers:
+task**1**：RetroCreatePlaylist **complexity：2.4**✅
+        在 Retro Music 中创建名为 “{playlist_name}” 的播放列表，按顺序包含指定歌曲（{names}）的任务
 
-<p align="center">
-   <img src="assets/miniwob.png" style="width:30%">
-</p>
+没有按照给定顺序或者某一首歌不是指定歌曲
 
-## Create your own agent
+#### SimpleDrawPro 绘图工具app✅
 
-In addition to the agents we provide [here](https://github.com/google-research/android_world/tree/main/android_world/agents), you can also easily create your own agent and run the benchmark with it as follows.
+task**1**：SimpleDrawProCreateDrawing **complexity：1.8**
+         在 Simple Draw Pro 中创建一个名为 {file_name} 的新绘图，并将其保存在 sdk_gphone_x86_64 存储区域的 Pictures 文件夹中的任务
 
-1. Create an agent class that inherits from [EnvironmentInteractingAgent](https://github.com/google-research/android_world/blob/6e4feb00702735c9a7485f4ae714528a058cb2b7/android_world/agents/base_agent.py#L39C1-L39C44) and implement the [step](https://github.com/google-research/android_world/blob/6e4feb00702735c9a7485f4ae714528a058cb2b7/android_world/agents/base_agent.py#L116) method.
-In the current workflow, the agent tries to complete a task in a for loop. In each round, the [step](https://github.com/google-research/android_world/blob/6e4feb00702735c9a7485f4ae714528a058cb2b7/android_world/agents/base_agent.py#L116) method will be called and this is where you implement your agent's logic. A typical approach involves first gathering information like the current screenshot, the UI elements (like buttons, icons) through the AndroidEnv instance within the agent, selecting one of the [supported actions](https://github.com/google-research/android_world/blob/main/android_world/env/json_action.py), executing it through the AndroidEnv and returning an [AgentInteractionResult](https://github.com/google-research/android_world/blob/6e4feb00702735c9a7485f4ae714528a058cb2b7/android_world/agents/base_agent.py#L26). The `done` property on AgentInteractionResult should be set to true to indicate that the task is finished.
+#### SimpleGalleryPro保存收据app
 
-2. Import your agent in [run.py](https://github.com/google-research/android_world/blob/main/run.py) and also add it into the [_get_agent](https://github.com/google-research/android_world/blob/15471441ac306ff08bca87454b1b546ae81db7af/run.py#L147) method which takes in your agent's name and return an instance of it.
+task**1**：SaveCopyOfReceiptTaskEval **complexity：1.6**
+        在 Simple Gallery Pro 中，复制 DCIM 中的 {file_name} ，并将同名副本保存到 Download 中的任务
 
-3. Now you can run the benchmark with your new agent using the command above with the `agent_name` flag changed to your agent's name.
+#### markor_sms
 
-## Adding new tasks
+task**1**：MarkorCreateNoteAndSms    **complexity：1.8**
 
-Please see [the guide](https://github.com/google-research/android_world/blob/main/docs/tasks_guide.md) on adding new tasks to AndroidWorld.
+在Markor中创建一个给定名字的新笔记，并输入特定文本，使用Simple SMS Messenger通过短信将笔记的全部内容分享给一个给定电话号码的人
 
-## Citation
-
-If you use our environment or data, please cite our paper:
-
-```
-@misc{rawles2024androidworlddynamicbenchmarkingenvironment,
-      title={AndroidWorld: A Dynamic Benchmarking Environment for Autonomous Agents},
-      author={Christopher Rawles and Sarah Clinckemaillie and Yifan Chang and Jonathan Waltz and Gabrielle Lau and Marybeth Fair and Alice Li and William Bishop and Wei Li and Folawiyo Campbell-Ajala and Daniel Toyama and Robert Berry and Divya Tyamagundlu and Timothy Lillicrap and Oriana Riva},
-      year={2024},
-      eprint={2405.14573},
-      archivePrefix={arXiv},
-      primaryClass={cs.AI},
-      url={https://arxiv.org/abs/2405.14573},
-}
-```
-
-*This is not an officially supported Google product.*
