@@ -1,6 +1,6 @@
 # 🤖 反思Agent Benchmark设计与测评
 
-## AndroidWorld任务清单
+# AndroidWorld任务清单
 
 **“内省式”基准设计的一般原则**
          注入不确定性：弹窗、广告、权限、打乱的UI元素。
@@ -15,7 +15,7 @@ task**1**：AudioRecorderRecordAudioWithFileName   **complexity：2**✅
 
 检查是否已完成一个使用file_name的录音的任务
 
-修改：录制开始后，显示错误，如“麦克风繁忙”。
+修改：录制开始后，显示错误，“麦克风繁忙”。
 
 评估：代理能否暂停，识别出它实际上没有记录，然后重试？
 
@@ -103,16 +103,18 @@ task**1**：RecipeAddMultipleRecipesFromMarkor **complexity：6**❌
 task**1**：RetroCreatePlaylist **complexity：2.4**✅
         在 Retro Music 中创建名为 “{playlist_name}” 的播放列表，按顺序包含指定歌曲（{names}）的任务
 
-没有按照给定顺序或者某一首歌不是指定歌曲
+没有按照给定顺序：**打乱所给顺序中前两首歌曲的顺序**
 
 #### SimpleDrawPro 绘图工具app✅
 
 task**1**：SimpleDrawProCreateDrawing **complexity：1.8**
          在 Simple Draw Pro 中创建一个名为 {file_name} 的新绘图，并将其保存在 sdk_gphone_x86_64 存储区域的 Pictures 文件夹中的任务
 
+​     **没有按照给定的区域保存，而是选择了另一个区域**
+
 #### SimpleGalleryPro保存收据app
 
-task**1**：SaveCopyOfReceiptTaskEval **complexity：1.6**
+task**1**：SaveCopyOfReceiptTaskEval **complexity：1.6****❌
         在 Simple Gallery Pro 中，复制 DCIM 中的 {file_name} ，并将同名副本保存到 Download 中的任务
 
 #### markor_sms
@@ -141,3 +143,4 @@ task**1**：MarkorCreateNoteAndSms    **complexity：1.8**
 └── README.md           # 本文档
 ```
 只需在env文件中配置llm即可
+
